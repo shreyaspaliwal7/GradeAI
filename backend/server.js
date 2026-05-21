@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import mongoose from 'mongoose';
 import { connectDB } from './config/db.js';
 import uploadRoutes from './routes/uploads.js';
 import evaluationRoutes from './routes/evaluations.js';
@@ -22,8 +23,6 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
 ].filter(Boolean);
-
-connectDB();
 
 // middlewares
 app.use(
@@ -49,18 +48,24 @@ app.use('/api/evaluations', evaluationRoutes);
 
 // health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'UP',
-    message: 'GradeAi Backend API is running smoothly.',
-    timestamp: new Date()
+  const dbReady = mongoose.connection.readyState === 1;
+  res.status(dbReady ? 200 : 503).json({
+    status: dbReady ? 'UP' : 'DEGRADED',
+    database: dbReady ? 'connected' : 'disconnected',
+    message: dbReady
+      ? 'GradeAi Backend API is running smoothly.'
+      : 'API is up but MongoDB is not connected.',
+    timestamp: new Date(),
   });
 });
 
-// start Background Worker Loop
-startQueueWorker();
+const startServer = async () => {
+  await connectDB();
+  startQueueWorker();
+  app.listen(PORT, () => {
+    console.log(`Uploads served at http://localhost:${PORT}/uploads`);
+    console.log(`Server check: http://localhost:${PORT}/api/health`);
+  });
+};
 
-// start server listening
-app.listen(PORT, () => {
-  console.log(`Uploads served at http://localhost:${PORT}/uploads`);
-  console.log(`Server check: http://localhost:${PORT}/api/health`);
-});
+startServer();
