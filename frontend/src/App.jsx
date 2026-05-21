@@ -3,6 +3,7 @@ import { Sparkles, Library, Server, Database, Check } from 'lucide-react';
 import UploadPanel from './components/UploadPanel';
 import AnalyticsView from './components/AnalyticsView';
 import ScorecardView from './components/ScorecardView';
+import { API_BASE } from './config/api';
 
 export default function App() {
   const [activeAnswerKey, setActiveAnswerKey] = useState(null);
@@ -22,7 +23,6 @@ export default function App() {
   const [backendStatus, setBackendStatus] = useState('checking'); // 'checking', 'connected', 'disconnected'
   
   const pollingRef = useRef(null);
-  const API_BASE = 'http://localhost:5000/api';
 
   // 1. Check server connectivity
   const checkBackendStatus = async () => {

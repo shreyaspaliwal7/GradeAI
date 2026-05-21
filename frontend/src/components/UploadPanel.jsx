@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, Award, Loader2 } from 'lucide-react';
+import { API_BASE } from '../config/api';
 
 export default function UploadPanel({ 
   onUploadSuccess, 
@@ -17,8 +18,6 @@ export default function UploadPanel({
   
   const keyInputRef = useRef(null);
   const studentInputRef = useRef(null);
-
-  const API_BASE = 'http://localhost:5000/api';
 
   // Handle Answer Key File Selection
   const handleKeyFileChange = async (e) => {
