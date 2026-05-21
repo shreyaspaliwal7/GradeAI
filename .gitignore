@@ -1,0 +1,28 @@
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Uploads & runtime data
+backend/uploads/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS & editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Local overrides
+*.local
