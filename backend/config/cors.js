@@ -19,7 +19,7 @@ export const isOriginAllowed = (origin) => {
   if (allowed.includes(origin)) return true;
 
   // Vercel production + preview deployments
-  if (/^https:\/\/[\w-]+\.vercel\.app$/.test(origin)) return true;
+  if (/^https:\/\/[a-zA-Z0-9-]+\.vercel\.app$/.test(origin)) return true;
 
   return false;
 };
