@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, X, Award, Loader2 } from 'lucide-react';
+import { Upload, X, Loader2, AlertCircle } from 'lucide-react';
 import { API_BASE } from '../config/api';
 
 export default function UploadPanel({ 

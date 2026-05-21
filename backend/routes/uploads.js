@@ -46,10 +46,13 @@ router.post('/answer-key', upload.single('file'), async (req, res) => {
     const { originalname, path: filePath } = req.file;
     console.log(`Processing answer key upload: ${originalname}`);
 
-    // extract text
     const extractedText = await extractTextFromFile(filePath, originalname);
+    if (!extractedText || extractedText.length < 10) {
+      return res.status(400).json({
+        error: 'Could not extract readable text from this file. Try .txt/.md or a text-based PDF.',
+      });
+    }
 
-    // save to database
     const doc = new Document({
       fileName: originalname,
       fileUrl: `/uploads/${path.basename(filePath)}`,
@@ -94,8 +97,12 @@ router.post('/submissions', upload.array('files', 5), async (req, res) => {
     for (const file of files) {
       const { originalname, path: filePath } = file;
       
-      // extract text
       const extractedText = await extractTextFromFile(filePath, originalname);
+      if (!extractedText || extractedText.length < 10) {
+        return res.status(400).json({
+          error: `Could not extract text from "${originalname}". Use a text-based PDF or .txt/.md file.`,
+        });
+      }
 
       const doc = new Document({
         fileName: originalname,

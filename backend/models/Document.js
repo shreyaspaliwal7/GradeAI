@@ -34,6 +34,10 @@ const documentSchema = new mongoose.Schema(
       enum: ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'],
       required: true,
       default: 'PENDING'
+    },
+    failureReason: {
+      type: String,
+      default: null
     }
   },
   {

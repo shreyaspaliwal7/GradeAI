@@ -8,7 +8,7 @@ export default function AnalyticsView({
   onSelectSubmission, 
   onResetDatabase 
 }) {
-  const getStatusBadge = (status, score) => {
+  const getStatusBadge = (status, score, failureReason) => {
     switch (status) {
       case 'PENDING':
         return (
@@ -31,7 +31,10 @@ export default function AnalyticsView({
         );
       case 'FAILED':
         return (
-          <span className="inline-flex items-center gap-1 bg-rose-50 text-rose-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-rose-100">
+          <span
+            className="inline-flex items-center gap-1 bg-rose-50 text-rose-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-rose-100"
+            title={failureReason || 'Grading failed — check Render logs'}
+          >
             Failed
           </span>
         );
@@ -161,7 +164,14 @@ export default function AnalyticsView({
                         </div>
                       </td>
                       <td className="py-3.5 px-4 text-center">
-                        {getStatusBadge(sub.status, sub.evaluation?.totalScore)}
+                        <div className="flex flex-col items-center gap-1">
+                          {getStatusBadge(sub.status, sub.evaluation?.totalScore, sub.failureReason)}
+                          {sub.status === 'FAILED' && sub.failureReason && (
+                            <span className="text-[10px] text-rose-600 max-w-[200px] truncate" title={sub.failureReason}>
+                              {sub.failureReason}
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

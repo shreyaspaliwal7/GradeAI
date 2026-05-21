@@ -1,6 +1,6 @@
-import { GoogleGenAI, Type } from '@google/genai';
 import Document from '../models/Document.js';
 import Evaluation from '../models/Evaluation.js';
+import { gradeWithGemini } from './geminiGrader.js';
 
 let isProcessing = false;
 
@@ -40,92 +40,12 @@ export const processQueue = async () => {
 
         const studentText = studentDoc.extractedText;
         const apiKey = process.env.GEMINI_API_KEY;
+        const isRealApiKey = apiKey && apiKey !== 'YOUR_GEMINI_API_KEY' && apiKey.trim() !== '';
 
         let evaluationData;
 
-        const isRealApiKey = apiKey && apiKey !== 'YOUR_GEMINI_API_KEY' && apiKey.trim() !== '';
-
         if (isRealApiKey) {
-          console.log(`[QueueWorker] Calling Gemini API for grading...`);
-          const ai = new GoogleGenAI({ apiKey });
-
-          let systemPrompt = '';
-          if (answerKeyText) {
-            systemPrompt = `You are an expert academic evaluator. You are grading a student assignment against a provided Answer Key.
-
-Evaluate the student's submission rigorously against the answer key. Grade out of 100 total. Ensure your overall score matches the sum of the breakdown criteria scores. Provide detailed constructive critiques for each criterion.
-
---- ANSWER KEY ---
-${answerKeyText}
-
---- STUDENT SUBMISSION ---
-${studentText}
-`;
-          } else {
-            systemPrompt = `You are an expert academic evaluator. You are grading a student assignment. There is no answer key provided.
-
-Evaluate the student's submission based on general academic principles for this subject/topic. Create appropriate grading criteria (e.g., Content Accuracy, Organization & Structure, Critical Thinking, Grammar & Clarity) totaling 100 points. Grade the submission out of 100 total. Ensure your overall score matches the sum of the breakdown criteria scores. Provide detailed constructive critiques for each criterion.
-
---- STUDENT SUBMISSION ---
-${studentText}
-`;
-          }
-
-          // strict responseSchema
-          const responseSchema = {
-            type: Type.OBJECT,
-            properties: {
-              totalScore: {
-                type: Type.INTEGER,
-                description: "Total grade calculated for the student submission, out of 100."
-              },
-              overallFeedback: {
-                type: Type.STRING,
-                description: "Comprehensive summary critique of the entire submission, noting key strengths and core improvement areas."
-              },
-              breakdown: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    criterion: {
-                      type: Type.STRING,
-                      description: "The name of the grading criterion (e.g., Accuracy, Content, Clarity, Structure, Grammar)."
-                    },
-                    score: {
-                      type: Type.INTEGER,
-                      description: "Score awarded for this specific criterion."
-                    },
-                    maxScore: {
-                      type: Type.INTEGER,
-                      description: "Maximum possible score for this specific criterion (e.g., 20 or 25)."
-                    },
-                    critique: {
-                      type: Type.STRING,
-                      description: "Targeted feedback and justification for this specific criterion's grade."
-                    }
-                  },
-                  required: ["criterion", "score", "maxScore", "critique"]
-                },
-                description: "List of individual rubric criteria with detailed grading breakdown."
-              }
-            },
-            required: ["totalScore", "overallFeedback", "breakdown"]
-          };
-
-          const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: systemPrompt,
-            config: {
-              responseMimeType: 'application/json',
-              responseSchema: responseSchema
-            }
-          });
-
-          const rawText = response.text;
-          console.log(`[QueueWorker] Gemini returned raw output:`, rawText);
-          evaluationData = JSON.parse(rawText);
-
+          evaluationData = await gradeWithGemini(studentText, answerKeyText);
         } else {
           console.warn(`[QueueWorker] WARNING: GEMINI_API_KEY is not configured. Simulating AI evaluation (Demo Mode)...`);
           await sleep(2500); // simulate processing delay for visual feedback
@@ -204,6 +124,7 @@ ${studentText}
       } catch (err) {
         console.error(`[QueueWorker] Failed to evaluate "${studentDoc.fileName}":`, err);
         studentDoc.status = 'FAILED';
+        studentDoc.failureReason = err.message || 'Grading failed';
         await studentDoc.save();
       }
     }
