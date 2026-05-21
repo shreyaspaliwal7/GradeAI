@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
 import { connectDB } from './config/db.js';
+import { corsOptions, getAllowedOrigins } from './config/cors.js';
 import uploadRoutes from './routes/uploads.js';
 import evaluationRoutes from './routes/evaluations.js';
 import { startQueueWorker } from './services/queueProcessor.js';
@@ -18,24 +19,8 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  'http://localhost:5173',
-  'http://localhost:3000',
-].filter(Boolean);
-
 // middlewares
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-  })
-);
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -76,6 +61,7 @@ const startServer = async () => {
   await connectDB();
   startQueueWorker();
   app.listen(PORT, () => {
+    console.log(`CORS allowed origins: ${getAllowedOrigins().join(', ')} (+ *.vercel.app)`);
     console.log(`Uploads served at http://localhost:${PORT}/uploads`);
     console.log(`Server check: http://localhost:${PORT}/api/health`);
   });
