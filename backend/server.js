@@ -46,6 +46,19 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/evaluations', evaluationRoutes);
 
+app.get('/', (req, res) => {
+  res.json({
+    name: 'GradeAI API',
+    status: 'running',
+    message: 'This is the backend only. Open your Vercel URL for the web app.',
+    endpoints: {
+      health: '/api/health',
+      uploads: '/api/uploads',
+      evaluations: '/api/evaluations',
+    },
+  });
+});
+
 // health check endpoint
 app.get('/api/health', (req, res) => {
   const dbReady = mongoose.connection.readyState === 1;
